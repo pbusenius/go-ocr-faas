@@ -5,12 +5,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/nuclio/nuclio-sdk-go"
 	nutest "github.com/nuclio/nuclio-test-go"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBase64Image(t *testing.T) {
 	var re request
+	var response response
 
 	data, err := os.ReadFile("helloworld.txt")
 	assert.Nil(t, err)
@@ -39,10 +41,20 @@ func TestBase64Image(t *testing.T) {
 	// invoke the tested function with the new event and log it's output
 	resp, err := tc.Invoke(&testEvent)
 	tc.Logger.InfoWith("Run complete", "resp", resp, "err", err)
+
+	nuclioResponse, ok := resp.(nuclio.Response)
+	assert.True(t, ok)
+
+	err = json.Unmarshal(nuclioResponse.Body, &response)
+	assert.Nil(t, err)
+
+	assert.Equal(t, response.ImageName, "helloworld.png")
+	assert.Equal(t, response.Content, "Hello, World!")
 }
 
 func TestUrlImage(t *testing.T) {
 	var re request
+	var response response
 
 	re.ImageName = "helloworld.png"
 	re.ImageUrl = "https://www.diggernaut.com/sandbox/hello_world.png"
@@ -68,4 +80,13 @@ func TestUrlImage(t *testing.T) {
 	// invoke the tested function with the new event and log it's output
 	resp, err := tc.Invoke(&testEvent)
 	tc.Logger.InfoWith("Run complete", "resp", resp, "err", err)
+
+	nuclioResponse, ok := resp.(nuclio.Response)
+	assert.True(t, ok)
+
+	err = json.Unmarshal(nuclioResponse.Body, &response)
+	assert.Nil(t, err)
+
+	assert.Equal(t, response.ImageName, "helloworld.png")
+	assert.Equal(t, response.Content, "Hello world")
 }
